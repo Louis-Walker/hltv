@@ -1,21 +1,34 @@
 package hltv
 
 import (
-	"net/http"
+	"errors"
+	"fmt"
+
+	"github.com/gocolly/colly"
 )
 
 const Version = "0.0.1"
 
 type Client struct {
-	http    *http.Client
-	baseURL string
+	baseURL   string
+	collector *colly.Collector
 }
 
-func New(httpClient *http.Client) *Client {
+func New() *Client {
+	co := colly.NewCollector(
+		colly.AllowedDomains("hltv.org", "www.hltv.org"),
+	)
 	c := &Client{
-		http:    httpClient,
-		baseURL: "https://www.hltv.org/",
+		baseURL:   "https://www.hltv.org/",
+		collector: co,
 	}
-
 	return c
+}
+
+func collectorError(cr *colly.Response, ce error, err *error) {
+	if cr.StatusCode != 0 {
+		*err = fmt.Errorf("%v : %v", cr.StatusCode, cr.Body)
+		return
+	}
+	*err = errors.New(ce.Error())
 }
