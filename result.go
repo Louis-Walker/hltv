@@ -8,7 +8,7 @@ import (
 	"github.com/gocolly/colly"
 )
 
-type team struct {
+type simpleTeam struct {
 	name   string
 	logo   string
 	result int
@@ -18,7 +18,7 @@ type Result struct {
 	MatchID int
 	Maps    string
 	Time    time.Time
-	Teams   []team
+	Teams   []simpleTeam
 	Event   struct {
 		name string
 		logo string
@@ -49,12 +49,12 @@ func (c *Client) GetResults() (results []Result, err error) {
 			sr.Time = time.UnixMilli(unixInt).UTC()
 
 			// Teams
-			var team1 team
+			var team1 simpleTeam
 			team1El := el.DOM.Find(".team1")
 			team1.name = team1El.Find("div").Text()
 			team1.logo, _ = team1El.Find(".team-logo").Attr("src")
 
-			var team2 team
+			var team2 simpleTeam
 			team2El := el.DOM.Find(".team2")
 			team2.name = team2El.Find("div").Text()
 			team2.logo, _ = team2El.Find(".team-logo").Attr("src")

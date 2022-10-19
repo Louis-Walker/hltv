@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type Stats struct {
+type stats struct {
 	Name     string
 	Nickname string
 	ID       int
@@ -15,14 +15,12 @@ type Stats struct {
 	Rating   int
 }
 
-type Team struct {
-	Name    string
-	Logo    string
-	Result  int
-	Players []Stats
+type fullTeam struct {
+	simpleTeam
+	Players []stats
 }
 
-type MapTeam struct {
+type mapTeam struct {
 	Name   string
 	Logo   string
 	Result struct {
@@ -32,23 +30,23 @@ type MapTeam struct {
 	}
 }
 
-type Map struct {
+type matchMap struct {
 	Name  string
 	Pick  string
-	Teams []MapTeam
+	Teams []mapTeam
 }
 
-type Match struct {
+type MatchInfo struct {
 	ID    int
 	Time  time.Time
 	Event struct {
 		name string
 		logo string
 	}
-	Teams []Team
-	Maps  []Map
+	Teams []fullTeam
+	Maps  []matchMap
 }
 
-func (c *Client) GetMatches() (matches []Match, err error) {
+func (c *Client) GetMatch() (matches []MatchInfo, err error) {
 	return matches, err
 }
