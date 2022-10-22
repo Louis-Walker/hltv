@@ -25,10 +25,12 @@ func New() *Client {
 	return c
 }
 
-func collectorError(cr *colly.Response, ce error, err *error) {
-	if cr.StatusCode != 0 {
-		*err = fmt.Errorf("%v : %v", cr.StatusCode, cr.Body)
-		return
-	}
-	*err = errors.New(ce.Error())
+func collectorError(co *colly.Collector, err *error) {
+	co.OnError(func(cr *colly.Response, ce error) {
+		if cr.StatusCode != 0 {
+			*err = fmt.Errorf("%v : %v", cr.StatusCode, cr.Body)
+			return
+		}
+		*err = errors.New(ce.Error())
+	})
 }

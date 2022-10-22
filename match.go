@@ -16,7 +16,7 @@ type stats struct {
 }
 
 type fullTeam struct {
-	simpleTeam
+	SimpleTeam
 	Players []stats
 }
 

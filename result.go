@@ -8,74 +8,86 @@ import (
 	"github.com/gocolly/colly"
 )
 
-type simpleTeam struct {
-	name   string
-	logo   string
-	result int
+type SimpleTeam struct {
+	Name   string
+	Logo   string
+	Score  int
+	Result int
 }
 
-type Result struct {
+type SimpleMatch struct {
 	MatchID int
 	Maps    string
 	Time    time.Time
-	Teams   []simpleTeam
+	Teams   []SimpleTeam
 	Event   struct {
-		name string
-		logo string
+		Name string
+		Logo string
 	}
 }
 
-func (c *Client) GetResults() (results []Result, err error) {
+func (c *Client) GetResults() (results []SimpleMatch, err error) {
 	co := c.collector
 
 	co.OnHTML("body", func(el *colly.HTMLElement) {
 		el.ForEach(".result-con", func(i int, el *colly.HTMLElement) {
-			var sr Result
+			var r SimpleMatch
 
-			sr.Maps = el.DOM.Find(".map-text").Text()
-			sr.Event.name = el.DOM.Find(".event-name").Text()
-			sr.Event.logo, _ = el.DOM.Find(".event-logo").Attr("src")
+			r.MatchID = getMatchID(el)
+			r.Maps = el.DOM.Find(".map-text").Text()
+			r.Time = getMatchTime(el)
+			r.Teams = getMatchTeams(el, ".team", ".team-logo")
+			r.Event.Name, r.Event.Logo = getMatchEvent(el, ".event-name", ".event-logo")
 
-			// Match ID
-			var href string
-			href, _ = el.DOM.Find("a[href]").Attr("href")
-			id := strings.Split(href, "/")[2]
-			sr.MatchID, _ = strconv.Atoi(id)
-
-			// Time
-			var unixInt int64
-			unixString := el.Attr("data-zonedgrouping-entry-unix")
-			unixInt, _ = strconv.ParseInt(unixString, 10, 64)
-			sr.Time = time.UnixMilli(unixInt).UTC()
-
-			// Teams
-			var team1 simpleTeam
-			team1El := el.DOM.Find(".team1")
-			team1.name = team1El.Find("div").Text()
-			team1.logo, _ = team1El.Find(".team-logo").Attr("src")
-
-			var team2 simpleTeam
-			team2El := el.DOM.Find(".team2")
-			team2.name = team2El.Find("div").Text()
-			team2.logo, _ = team2El.Find(".team-logo").Attr("src")
-
-			scoreEls := el.DOM.Find(".result-score").Children()
-			t1Score := scoreEls.First().Text()
-			team1.result, _ = strconv.Atoi(t1Score)
-			t2Score := scoreEls.Last().Text()
-			team1.result, _ = strconv.Atoi(t1Score)
-			team2.result, _ = strconv.Atoi(t2Score)
-
-			sr.Teams = append(sr.Teams, team1, team2)
-
-			results = append(results, sr)
+			results = append(results, r)
 		})
 	})
 
-	co.OnError(func(cr *colly.Response, ce error) {
-		collectorError(cr, ce, &err)
-	})
+	collectorError(co, &err)
 
 	co.Visit(c.baseURL + "results")
 	return results, err
+}
+
+func getMatchID(el *colly.HTMLElement) (ID int) {
+	var href string
+	href, _ = el.DOM.Find("a[href]").Attr("href")
+	id := strings.Split(href, "/")[2]
+	ID, _ = strconv.Atoi(id)
+	return
+}
+
+func getMatchTime(el *colly.HTMLElement) (matchTime time.Time) {
+	var unixInt int64
+	unixString := el.Attr("data-zonedgrouping-entry-unix")
+	unixInt, _ = strconv.ParseInt(unixString, 10, 64)
+	matchTime = time.UnixMilli(unixInt).UTC()
+	return
+}
+
+func getMatchEvent(el *colly.HTMLElement, nameNode string, logoNode string) (name string, logo string) {
+	name = el.DOM.Find(".event-name").Text()
+	logo, _ = el.DOM.Find(".event-logo").Attr("src")
+	return
+}
+
+func getMatchTeams(el *colly.HTMLElement, nameNode string, logoNode string) (teams []SimpleTeam) {
+	var team1 SimpleTeam
+	team1El := el.DOM.Find(".team1")
+	team1.Name = team1El.Find(nameNode).Text()
+	team1.Logo, _ = team1El.Find(logoNode).Attr("src")
+
+	var team2 SimpleTeam
+	team2El := el.DOM.Find(".team2")
+	team2.Name = team2El.Find(nameNode).Text()
+	team2.Logo, _ = team2El.Find(logoNode).Attr("src")
+
+	scoreEls := el.DOM.Find(".result-score").Children()
+	t1Score := scoreEls.First().Text()
+	team1.Result, _ = strconv.Atoi(t1Score)
+	t2Score := scoreEls.Last().Text()
+	team2.Result, _ = strconv.Atoi(t2Score)
+
+	teams = append(teams, team1, team2)
+	return
 }
