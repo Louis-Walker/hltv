@@ -28,7 +28,6 @@ type fullTeam struct {
 
 type mapTeam struct {
 	Name   string
-	Logo   string
 	Result struct {
 		First  int
 		Second int
@@ -154,7 +153,6 @@ func newMapTeam(name, logo, first, second, ext string) *mapTeam {
 
 	mt := &mapTeam{
 		Name: name,
-		Logo: logo,
 		Result: struct {
 			First  int
 			Second int
