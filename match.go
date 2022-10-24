@@ -81,7 +81,7 @@ func (c *Client) GetMatch(matchID int, matchURL string) (match MatchInfo, err er
 	collectorError(co, &err)
 
 	co.Visit(fmt.Sprintf("%vmatches/%v/%v", c.baseURL, matchID, matchURL))
-	return match, err
+	return
 }
 
 func getFullTeam(teamEl *goquery.Selection, playerEl *goquery.Selection) (team fullTeam) {
@@ -146,10 +146,10 @@ func getMatchMap(mEl *goquery.Selection) (mm matchMap) {
 	return
 }
 
-func newMapTeam(name, logo, first, second, ext string) *mapTeam {
-	f, _ := strconv.Atoi(first)
-	s, _ := strconv.Atoi(second)
-	e, _ := strconv.Atoi(ext)
+func newMapTeam(name, logo string, scores ...string) *mapTeam {
+	f, _ := strconv.Atoi(scores[0])
+	s, _ := strconv.Atoi(scores[1])
+	e, _ := strconv.Atoi(scores[2])
 
 	mt := &mapTeam{
 		Name: name,
