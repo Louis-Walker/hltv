@@ -46,7 +46,6 @@ func getFullMatch(el *colly.HTMLElement) (m FullMatch) {
 	})
 
 	// Live Indicator
-	m.Live = false
 	if el.DOM.HasClass("liveMatch") {
 		m.Live = true
 	}

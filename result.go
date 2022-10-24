@@ -9,10 +9,9 @@ import (
 )
 
 type SimpleTeam struct {
-	Name   string
-	Logo   string
-	Score  int
-	Result int
+	Name  string
+	Logo  string
+	Score int
 }
 
 type SimpleMatch struct {
@@ -84,9 +83,9 @@ func getMatchTeams(el *colly.HTMLElement, nameNode string, logoNode string) (tea
 
 	scoreEls := el.DOM.Find(".result-score").Children()
 	t1Score := scoreEls.First().Text()
-	team1.Result, _ = strconv.Atoi(t1Score)
+	team1.Score, _ = strconv.Atoi(t1Score)
 	t2Score := scoreEls.Last().Text()
-	team2.Result, _ = strconv.Atoi(t2Score)
+	team2.Score, _ = strconv.Atoi(t2Score)
 
 	teams = append(teams, team1, team2)
 	return
