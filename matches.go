@@ -24,17 +24,18 @@ func (c *Client) GetMatches() (matches []FullMatch, err error) {
 	})
 
 	collectorError(co, &err)
-
 	co.Visit(c.baseURL + "matches")
 	return matches, err
 }
 
 func getFullMatch(el *colly.HTMLElement) (m FullMatch) {
-	m.MatchID = getMatchID(el)
+	href, _ := el.DOM.Find("a[href]").Attr("href")
+
+	m.MatchID = idFromURL(href, 2)
 	m.Maps = el.DOM.Find(".matchMeta").Text()
 	m.Time = getMatchTime(el)
-	m.Teams = getMatchTeams(el, "matchTeamName", "matchTeamLogo")
-	m.Event.Name, m.Event.Logo = getMatchEvent(el, "matchEventName", "matchEventLogo")
+	m.Teams = getMatchTeams(el, ".matchTeamName", ".matchTeamLogo")
+	m.Event.Name, m.Event.Logo = getMatchEvent(el, ".matchEventName", ".matchEventLogo")
 
 	// Star Rating
 	ratingEls := el.DOM.Find(".matchRating")

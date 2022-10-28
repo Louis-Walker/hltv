@@ -3,8 +3,6 @@ package hltv
 import (
 	"fmt"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
@@ -23,9 +21,6 @@ type SimplePlayer struct {
 func (c *Client) GetPlayers() (players []SimplePlayer, err error) {
 	co := c.collector
 
-	endDate := time.Now().Format("2006-01-02")
-	startDate := time.Now().Add(-(time.Hour * 8760)).Format("2006-01-02")
-
 	co.OnHTML("body", func(el *colly.HTMLElement) {
 		el.DOM.Find(".stats-table").Find("tr").Each(func(i int, el *goquery.Selection) {
 			if i == 0 {
@@ -35,13 +30,11 @@ func (c *Client) GetPlayers() (players []SimplePlayer, err error) {
 			var sp SimplePlayer
 
 			href, _ := el.Find("a").First().Attr("href")
-			hrefSl := strings.Split(href, "/")
-			id, _ := strconv.Atoi(hrefSl[3])
-			sp.ID = id
+			sp.ID = idFromURL(href, 3)
 
 			sp.Team, _ = el.Find(".teamCol").Find("img").Attr("title")
 			sp.Nickname = el.Find(".playerCol").Find("a").Text()
-			sp.Slug = hrefSl[4]
+			sp.Slug = pathFromURL(href, 4)
 
 			mp, _ := strconv.Atoi(el.Find(".statsDetail").Eq(0).Text())
 			sp.MapsPlayed = mp
@@ -56,6 +49,7 @@ func (c *Client) GetPlayers() (players []SimplePlayer, err error) {
 		})
 	})
 
-	co.Visit(fmt.Sprintf("%vstats/players?startDate=%v&endDate=%v&rankingFilter=Top50", c.baseURL, startDate, endDate))
+	collectorError(co, &err)
+	co.Visit(fmt.Sprintf("%vstats/players", c.baseURL))
 	return
 }

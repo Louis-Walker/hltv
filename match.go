@@ -79,7 +79,6 @@ func (c *Client) GetMatch(matchID int, matchURL string) (match MatchInfo, err er
 	})
 
 	collectorError(co, &err)
-
 	co.Visit(fmt.Sprintf("%vmatches/%v/%v", c.baseURL, matchID, matchURL))
 	return
 }
@@ -105,8 +104,7 @@ func getStats(pEl *goquery.Selection) (s stats) {
 	s.Nickname = pEl.Find(".player-nick").Text()
 
 	href, _ := pEl.Find("a").First().Attr("href")
-	id, _ := strconv.Atoi(strings.Split(href, "/")[2])
-	s.ID = id
+	s.ID = idFromURL(href, 2)
 
 	kd := strings.Split(pEl.Find(".kd").Text(), "-")
 	k, _ := strconv.Atoi(kd[0])

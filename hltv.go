@@ -3,6 +3,8 @@ package hltv
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/gocolly/colly"
 )
@@ -23,6 +25,16 @@ func New() *Client {
 		collector: co,
 	}
 	return c
+}
+
+func pathFromURL(url string, index int) (path string) {
+	path = strings.Split(url, "/")[index]
+	return
+}
+
+func idFromURL(url string, index int) (ID int) {
+	ID, _ = strconv.Atoi(pathFromURL(url, index))
+	return
 }
 
 func collectorError(co *colly.Collector, err *error) {

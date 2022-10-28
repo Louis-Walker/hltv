@@ -18,7 +18,7 @@ func main() {
 	if matches != nil {
 		fmt.Println("Matches:")
 		for _, item := range matches {
-			fmt.Println("", item.MatchID)
+			fmt.Println("", item.Teams)
 		}
 	}
 }

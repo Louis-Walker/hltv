@@ -10,15 +10,10 @@ import (
 func main() {
 	client := hltv.New()
 
-	results, err := client.GetResults()
+	player, err := client.GetPlayer(429)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	if results != nil {
-		fmt.Println("Results:")
-		for _, item := range results {
-			fmt.Println("", item.Event)
-		}
-	}
+	fmt.Println(player)
 }

@@ -2,7 +2,6 @@ package hltv
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -31,8 +30,9 @@ func (c *Client) GetResults() (results []SimpleMatch, err error) {
 	co.OnHTML("body", func(el *colly.HTMLElement) {
 		el.ForEach(".result-con", func(i int, el *colly.HTMLElement) {
 			var r SimpleMatch
+			href, _ := el.DOM.Find("a[href]").Attr("href")
 
-			r.MatchID = getMatchID(el)
+			r.MatchID = idFromURL(href, 2)
 			r.Maps = el.DOM.Find(".map-text").Text()
 			r.Time = getMatchTime(el)
 			r.Teams = getMatchTeams(el, ".team", ".team-logo")
@@ -43,17 +43,8 @@ func (c *Client) GetResults() (results []SimpleMatch, err error) {
 	})
 
 	collectorError(co, &err)
-
 	co.Visit(c.baseURL + "results")
 	return results, err
-}
-
-func getMatchID(el *colly.HTMLElement) (ID int) {
-	var href string
-	href, _ = el.DOM.Find("a[href]").Attr("href")
-	id := strings.Split(href, "/")[2]
-	ID, _ = strconv.Atoi(id)
-	return
 }
 
 func getMatchTime(el *colly.HTMLElement) (matchTime time.Time) {
@@ -65,8 +56,8 @@ func getMatchTime(el *colly.HTMLElement) (matchTime time.Time) {
 }
 
 func getMatchEvent(el *colly.HTMLElement, nameNode string, logoNode string) (name string, logo string) {
-	name = el.DOM.Find(".event-name").Text()
-	logo, _ = el.DOM.Find(".event-logo").Attr("src")
+	name = el.DOM.Find(nameNode).Text()
+	logo, _ = el.DOM.Find(logoNode).Attr("src")
 	return
 }
 
