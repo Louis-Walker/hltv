@@ -10,7 +10,7 @@ import (
 func main() {
 	client := hltv.New()
 
-	match, err := client.GetMatch(2359847, "websterz-vs-copenhagen-flames-cct-south-europe-series-1")
+	match, err := client.GetMatch(2359958)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

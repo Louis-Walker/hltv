@@ -2,6 +2,7 @@ package hltv
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -42,9 +43,9 @@ type matchMap struct {
 }
 
 type MatchInfo struct {
-	MatchID int
-	Time    time.Time
-	Event   struct {
+	ID    int
+	Time  time.Time
+	Event struct {
 		Name string
 		Logo string
 	}
@@ -52,11 +53,15 @@ type MatchInfo struct {
 	Maps  []matchMap
 }
 
-func (c *Client) GetMatch(matchID int, matchURL string) (match MatchInfo, err error) {
+func (c *Client) GetMatch(ID int) (match MatchInfo, err error) {
 	co := c.collector
+	matchURL, err := c.getMatchURL(ID)
+	if err != nil {
+		log.Printf("[HLTV] %v", err)
+	}
 
 	co.OnHTML("body", func(el *colly.HTMLElement) {
-		match.MatchID = matchID
+		match.ID = ID
 		match.Event.Name = el.DOM.Find(".event").Children().First().Text()
 
 		// Time
@@ -73,13 +78,42 @@ func (c *Client) GetMatch(matchID int, matchURL string) (match MatchInfo, err er
 		match.Teams = append(match.Teams, team1, team2)
 
 		// Maps
-		el.DOM.Find(".mapholder").Each(func(i int, mEl *goquery.Selection) {
-			match.Maps = append(match.Maps, getMatchMap(mEl))
+		el.DOM.Find(".mapholder").Each(func(i int, el *goquery.Selection) {
+			match.Maps = append(match.Maps, getMatchMap(el))
 		})
 	})
 
 	collectorError(co, &err)
-	co.Visit(fmt.Sprintf("%vmatches/%v/%v", c.baseURL, matchID, matchURL))
+	co.Visit(fmt.Sprintf("%vmatches/%v/%v", c.baseURL, ID, matchURL))
+	return
+}
+
+func (c *Client) getMatchURL(ID int) (matchURL string, err error) {
+	co := c.collector
+
+	co.OnHTML("body", func(el *colly.HTMLElement) {
+		el.ForEach(".liveMatch", func(i int, el *colly.HTMLElement) {
+			href, _ := el.DOM.Find("a").Attr("href")
+			elID := idFromURL(href, 2)
+			if ID == elID {
+				matchURL = pathFromURL(href, 3)
+			}
+		})
+
+		el.ForEach(".upcomingMatch", func(i int, el *colly.HTMLElement) {
+			href, _ := el.DOM.Find("a").Attr("href")
+			elID := idFromURL(href, 2)
+			if ID == elID {
+				matchURL = pathFromURL(href, 3)
+			}
+		})
+	})
+
+	if len(matchURL) == 0 {
+		err = fmt.Errorf("no upcoming match was found with ID: %v", ID)
+	}
+
+	co.Visit(fmt.Sprintf("%vmatches", c.baseURL))
 	return
 }
 
@@ -121,24 +155,23 @@ func getStats(pEl *goquery.Selection) (s stats) {
 	return
 }
 
-func getMatchMap(mEl *goquery.Selection) (mm matchMap) {
-	mm.Name = mEl.Find(".mapname").Text()
-	mm.Pick = mEl.Find(".pick").Find(".results-teamname").Text()
+func getMatchMap(el *goquery.Selection) (mm matchMap) {
+	mm.Name = el.Find(".mapname").Text()
+	mm.Pick = el.Find(".pick").Find(".results-teamname").Text()
 
-	names := mEl.Find(".results-teamname")
-	logos := mEl.Find(".logo")
+	names := el.Find(".results-teamname")
+	logos := el.Find(".logo")
 
-	scoreHTML := mEl.Find(".results-center-half-score").Children().Text()
-	replacer := strings.NewReplacer("(", "", ")", ",", ":", ",", ";", ",", " ", "")
-	scores := strings.Split(replacer.Replace(scoreHTML), ",")
-
+	var t1, t2 *mapTeam
 	t1Name := names.First().Text()
 	t1Logo, _ := logos.First().Attr("src")
-	t1 := newMapTeam(t1Name, t1Logo, scores[0], scores[2], scores[4])
 
 	t2Name := names.Last().Text()
 	t2Logo, _ := logos.Last().Attr("src")
-	t2 := newMapTeam(t2Name, t2Logo, scores[1], scores[3], scores[5])
+
+	scores := el.Find(".results-center-half-score").Children()
+	t1 = newMapTeam(t1Name, t1Logo, scores.Eq(1).Text(), scores.Eq(5).Text(), scores.Eq(9).Text())
+	t2 = newMapTeam(t2Name, t2Logo, scores.Eq(3).Text(), scores.Eq(7).Text(), scores.Eq(11).Text())
 
 	mm.Teams = append(mm.Teams, *t1, *t2)
 	return

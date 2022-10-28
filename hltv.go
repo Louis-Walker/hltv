@@ -40,7 +40,7 @@ func idFromURL(url string, index int) (ID int) {
 func collectorError(co *colly.Collector, err *error) {
 	co.OnError(func(cr *colly.Response, ce error) {
 		if cr.StatusCode != 0 {
-			*err = fmt.Errorf("%v : %v", cr.StatusCode, cr.Body)
+			*err = fmt.Errorf("[%v] %v", cr.StatusCode, cr.Request.URL)
 			return
 		}
 		*err = errors.New(ce.Error())
